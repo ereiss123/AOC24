@@ -1,4 +1,3 @@
-# using .Test:assert
 # Part 1
 # Read in puzzle input
 list1 = Int64[]
