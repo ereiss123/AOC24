@@ -62,7 +62,7 @@ function findDirection(report)
             decreasing += 1
         end
     end
-    return increasing > decreasing ? up : dn
+    return increasing >= decreasing ? up : dn
 end
 
 "Recursively determine if a report is safe"
@@ -74,9 +74,11 @@ function safe(report, direction, can_recurse = true)
             violation = report[i] >= report[i+1] || diff_violation(report[i],report[i+1])
             if violation
                 if can_recurse
-                    deleteat!(report,i+1)
-                    is_safe = safe(report, direction, false)
-                    break
+                    for val in report, d in [up, dn]
+                        new_arr = [x for x in report if x != val]
+                        is_safe = safe(new_arr, d, false)
+                        if is_safe return is_safe end
+                    end
                 else
                     return false
                 end
@@ -85,9 +87,11 @@ function safe(report, direction, can_recurse = true)
             violation = report[i] <= report[i+1] || diff_violation(report[i],report[i+1])
             if violation
                 if can_recurse
-                    deleteat!(report,i+1)
-                    is_safe = safe(report, direction, false)
-                    break
+                    for val in report, d in [up, dn]
+                        new_arr = [x for x in report if x != val]
+                        is_safe = safe(new_arr, d, false)
+                        if is_safe return is_safe end
+                    end
                 else
                     return false
                 end
