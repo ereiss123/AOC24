@@ -74,11 +74,13 @@ function safe(report, direction, can_recurse = true)
             violation = report[i] >= report[i+1] || diff_violation(report[i],report[i+1])
             if violation
                 if can_recurse
-                    for val in report, d in [up, dn]
-                        new_arr = [x for x in report if x != val]
-                        is_safe = safe(new_arr, d, false)
-                        if is_safe return is_safe end
+                    for val in eachindex(report)
+                        new_arr = copy(report)
+                        deleteat!(new_arr, val)
+                        is_safe = safe(new_arr, up, false) || safe(new_arr, dn, false)
+                        if is_safe return true end
                     end
+                    return false
                 else
                     return false
                 end
@@ -87,11 +89,13 @@ function safe(report, direction, can_recurse = true)
             violation = report[i] <= report[i+1] || diff_violation(report[i],report[i+1])
             if violation
                 if can_recurse
-                    for val in report, d in [up, dn]
-                        new_arr = [x for x in report if x != val]
-                        is_safe = safe(new_arr, d, false)
-                        if is_safe return is_safe end
+                    for val in eachindex(report)
+                        new_arr = copy(report)
+                        deleteat!(new_arr, val)
+                        is_safe = safe(new_arr, up, false) || safe(new_arr, dn, false)
+                        if is_safe return true end
                     end
+                    return false
                 else
                     return false
                 end
