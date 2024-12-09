@@ -72,7 +72,7 @@ end
 test_checkletter()
 
 """Given the location of an X, find the rest of the word"""
-function findxmas(grid, xy)
+function findxmas_too_powerful(grid, xy)
     wordcount = 0
     # println("starting at $xy")
     # Find the Ms
@@ -92,6 +92,23 @@ function findxmas(grid, xy)
     wordcount = length(sarr)
     return wordcount
 end
+
+function test_findxmas()
+    i1 = split("""XMAS""")
+    @test findxmas_too_powerful(i1,(1,1)) == 1
+    i2 = split("""MMMSXXMASM
+                  MSAMXMSMSA
+                  AMXSXMAAMM
+                  MSAMASMSMX
+                  XMASAMXAMM
+                  XXAMMXXAMA
+                  SMSMSASXSS
+                  SAXAMASAAA
+                  MAMMMXMMMM
+                  MXMXAXMASX""")
+    @test findxmas_too_powerful(i2,(1,6)) == 6
+end
+test_findxmas()
 
 """Given an x,y cooridinate and direction,
  find the next four letters in a straight line"""
@@ -134,6 +151,23 @@ function checkline(grid, xy, dir)
     return word
 end
 
+function test_checkline()
+    i1 = split("""abcd
+    1234
+    efgh
+    5678
+    """)
+    @test checkline(i1, (1,1), "down") == "a1e5"
+    @test checkline(i1, (1,1), "left") == "OutOfBounds"
+    @test checkline(i1, (1,1), "right") == "abcd"
+    @test checkline(i1, (1,1), "dnright") == "a2g8"
+    @test checkline(i1, (4,4), "upleft") == "8g2a"
+    @test checkline(i1, (1,4), "dnleft") == "d3f5"
+    @test checkline(i1, (4,1), "up") == "5e1a"
+    @test checkline(i1, (4,1), "upright") == "5f3d"
+end
+test_checkline()
+
 """Given the location of an X, find the rest of the word"""
 function findxmaspt1(grid, xy)
     wordcount = 0
@@ -163,51 +197,11 @@ function findxmaspt1(grid, xy)
         if (down && left) dir = "dnleft" end
         if (up && right) dir = "upright" end
         if (down && right) dir = "dnright" end
-        @show dir
-        @show xy
-        @show m
         word = checkline(grid,xy,dir)
-        @show word
         wordcount = (word == "XMAS") ? wordcount+1 : wordcount
     end
     return wordcount
 end
-
-function test_checkline()
-    i1 = split("""abcd
-    1234
-    efgh
-    5678
-    """)
-    @test checkline(i1, (1,1), "down") == "a1e5"
-    @test checkline(i1, (1,1), "left") == "OutOfBounds"
-    @test checkline(i1, (1,1), "right") == "abcd"
-    @test checkline(i1, (1,1), "dnright") == "a2g8"
-    @test checkline(i1, (4,4), "upleft") == "8g2a"
-    @test checkline(i1, (1,4), "dnleft") == "d3f5"
-    @test checkline(i1, (4,1), "up") == "5e1a"
-    @test checkline(i1, (4,1), "upright") == "5f3d"
-end
-test_checkline()
-
-function test_findxmas()
-    i1 = split("""XMAS""")
-    @test findxmas(i1,(1,1)) == 1
-    i2 = split("""MMMSXXMASM
-                  MSAMXMSMSA
-                  AMXSXMAAMM
-                  MSAMASMSMX
-                  XMASAMXAMM
-                  XXAMMXXAMA
-                  SMSMSASXSS
-                  SAXAMASAAA
-                  MAMMMXMMMM
-                  MXMXAXMASX""")
-    @test findxmas(i2,(1,6)) == 6
-end
-test_findxmas()
-
-
 
 function part1(input_file)
     grid = readlines(input_file)
@@ -221,3 +215,66 @@ function part1(input_file)
 end
 @test part1("test.dat") == 18
 part1("input.dat")
+
+"""DEBUG
+
+Given a grid an (x,y), print the X characters
+"""
+function printx(grid, xy)
+    x = xy[1]
+    y = xy[2]
+    ltedge = y-1 <= 0
+    rtedge = y+1 > length(grid)
+    upedge = x-1 <= 0
+    dnedge = x+1 > length(grid)
+    ulcorner = ltedge || upedge ? '.' : grid[x-1][y-1]
+    urcorner = rtedge || upedge ? '.' : grid[x-1][y+1]
+    dlcorner = ltedge || dnedge ? '.' : grid[x+1][y-1]
+    drcorner = rtedge || dnedge ? '.' : grid[x+1][y+1]
+    str = """
+    $ulcorner . $urcorner
+    . $(grid[x][y]) .
+    $dlcorner . $drcorner
+    """
+    println(str)
+end
+
+"""Given the cooridates of an M check for X-MAS."""
+function findxmaspt2(grid, xy)
+    x = xy[1]
+    y = xy[2]
+    count = 0
+    ltedge = y-1 <= 0
+    rtedge = y+1 > length(grid)
+    upedge = x-1 <= 0
+    dnedge = x+1 > length(grid)
+    ulcorner = ltedge || upedge ? '.' : grid[x-1][y-1]
+    urcorner = rtedge || upedge ? '.' : grid[x-1][y+1]
+    dlcorner = ltedge || dnedge ? '.' : grid[x+1][y-1]
+    drcorner = rtedge || dnedge ? '.' : grid[x+1][y+1]
+    # Check if we are looking at a column X or row X
+    row = (ulcorner == urcorner) && (dlcorner == drcorner)
+    col = (ulcorner == dlcorner) && (urcorner == drcorner)
+    validchars = ['M','S']
+    if row && ulcorner in validchars
+        filter!(x->x!=ulcorner, validchars) # remove the option
+        count = dlcorner in validchars ? 1 : 0
+    elseif col && ulcorner in validchars
+        filter!(x->x!=ulcorner, validchars) # remove the option
+        count = urcorner in validchars ? 1 : 0
+    end
+    return count
+end
+
+function part2(input_file)
+    grid = readlines(input_file)
+    sum = 0
+    for (x,row) in enumerate(grid)
+        for (y,c) in enumerate(row)
+            if c == 'A' sum += findxmaspt2(grid, (x,y)) end
+        end
+    end
+    @show sum
+end
+@test part2("test.dat") == 9
+part2("input.dat")
